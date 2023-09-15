@@ -31,16 +31,20 @@ func main() {
 
 	var (
 		store = &db.Store{
-			User:  db.NewMongoUserStore(client),
-			Hotel: db.NewMongoHotelStore(client),
-			Room:  db.NewMongoRoomStore(client, db.NewMongoHotelStore(client)),
+			User:    db.NewMongoUserStore(client),
+			Hotel:   db.NewMongoHotelStore(client),
+			Room:    db.NewMongoRoomStore(client, db.NewMongoHotelStore(client)),
+			Booking: db.NewMongoBookingStore(client),
 		}
-		authHandler  = api.NewAuthHandler(store.User)
-		userHandler  = api.NewUserHandler(store.User)
-		hotelHandler = api.NewHotelHandler(store)
-		app          = fiber.New(fiberConfig)
-		authApi      = app.Group("/api/auth")
-		apiv1        = app.Group("/api/v1", middleware.JWTAuthentication)
+		authHandler    = api.NewAuthHandler(store.User)
+		userHandler    = api.NewUserHandler(store.User)
+		hotelHandler   = api.NewHotelHandler(store)
+		roomHandler    = api.NewRoomHandler(store)
+		bookingHandler = api.NewBookingHandler(store)
+		app            = fiber.New(fiberConfig)
+		authApi        = app.Group("/api/auth")
+		apiv1          = app.Group("/api/v1", middleware.JWTAuthentication(store.User))
+		adminApi       = apiv1.Group("/admin", middleware.AdminAuth)
 	)
 
 	// Auth routes
@@ -57,6 +61,14 @@ func main() {
 	apiv1.Get("/hotel", hotelHandler.HandletGetHotels)
 	apiv1.Get("/hotel/:id", hotelHandler.HandleGetHotel)
 	apiv1.Get("/hotel/:id/rooms", hotelHandler.HandleGetHotelRooms)
+
+	// room routes
+	apiv1.Post("/room/:id/book", roomHandler.HandleBookRoom)
+	apiv1.Get("/room", roomHandler.HandleGetRooms)
+
+	// booking routes
+	adminApi.Get("/booking", bookingHandler.HandleGetBookings)
+	apiv1.Get("/booking/:id", bookingHandler.HandleGetUserBooking)
 
 	app.Listen(*listenAddr)
 }

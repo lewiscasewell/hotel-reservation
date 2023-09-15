@@ -83,6 +83,7 @@ func main() {
 	seedHotel("Hilton", "New York", 5)
 	seedHotel("Marriot", "London", 3)
 	seedUser("Casewell", "Lewis", "lewis@test.com", "password")
+	seedUser("Smith", "John", "john@email.com", "password")
 }
 
 func init() {

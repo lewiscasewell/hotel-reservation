@@ -73,6 +73,7 @@ type User struct {
 	LastName          string             `bson:"lastName" json:"lastName"`
 	Email             string             `bson:"email" json:"email"`
 	EncryptedPassword string             `bson:"EncryptedPassword" json:"-"`
+	Role              string             `bson:"role" json:"role"`
 }
 
 func NewUserFromParams(params *CreateUserParams) (*User, error) {
