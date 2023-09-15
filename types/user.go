@@ -22,6 +22,11 @@ type CreateUserParams struct {
 	Password  string `json:"password"`
 }
 
+func IsValidPassword(encpw, pw string) bool {
+	err := bcrypt.CompareHashAndPassword([]byte(encpw), []byte(pw))
+	return err == nil
+}
+
 func (params CreateUserParams) Validate() map[string]string {
 	errors := make(map[string]string)
 	if len(params.FirstName) < minFirstNameLength {

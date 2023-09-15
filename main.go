@@ -5,6 +5,7 @@ import (
 	"flag"
 
 	"github.com/lewiscasewell/hotel-reservation/db"
+	"github.com/lewiscasewell/hotel-reservation/middleware"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/lewiscasewell/hotel-reservation/api"
@@ -28,17 +29,34 @@ func main() {
 		panic(err)
 	}
 
-	userHandler := api.NewUserHandler(db.NewMongoUserStore(client, db.DBNAME))
+	var (
+		store = &db.Store{
+			User:  db.NewMongoUserStore(client),
+			Hotel: db.NewMongoHotelStore(client),
+			Room:  db.NewMongoRoomStore(client, db.NewMongoHotelStore(client)),
+		}
+		authHandler  = api.NewAuthHandler(store.User)
+		userHandler  = api.NewUserHandler(store.User)
+		hotelHandler = api.NewHotelHandler(store)
+		app          = fiber.New(fiberConfig)
+		authApi      = app.Group("/api/auth")
+		apiv1        = app.Group("/api/v1", middleware.JWTAuthentication)
+	)
 
-	app := fiber.New(fiberConfig)
+	// Auth routes
+	authApi.Post("/", authHandler.HandleAuthenticate)
 
-	apiv1 := app.Group("/api/v1")
-
+	// User routes
 	apiv1.Put("/user/:id", userHandler.HandlePutUser)
 	apiv1.Post("/user", userHandler.HandlePostUser)
 	apiv1.Get("/user", userHandler.HandleGetUsers)
 	apiv1.Get("/user/:id", userHandler.HandleGetUser)
 	apiv1.Delete("/user/:id", userHandler.HandleDeleteUser)
+
+	// Hotel routes
+	apiv1.Get("/hotel", hotelHandler.HandletGetHotels)
+	apiv1.Get("/hotel/:id", hotelHandler.HandleGetHotel)
+	apiv1.Get("/hotel/:id/rooms", hotelHandler.HandleGetHotelRooms)
 
 	app.Listen(*listenAddr)
 }

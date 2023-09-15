@@ -24,6 +24,7 @@ type UserStore interface {
 	InsertUser(ctx context.Context, user *types.User) (*types.User, error)
 	UpdateUser(ctx context.Context, filter bson.M, params types.UpdateUserParams) error
 	DeleteUser(ctx context.Context, id string) error
+	GetUserByEmail(ctx context.Context, email string) (*types.User, error)
 }
 
 type MongoUserStore struct {
@@ -32,13 +33,28 @@ type MongoUserStore struct {
 	coll   *mongo.Collection
 }
 
-func NewMongoUserStore(c *mongo.Client, dbname string) *MongoUserStore {
+func NewMongoUserStore(c *mongo.Client) *MongoUserStore {
 	return &MongoUserStore{
 		client: c,
-		coll:   c.Database(dbname).Collection(userColl),
+		coll:   c.Database(DBNAME).Collection(userColl),
 	}
 }
 
+func (s *MongoUserStore) GetUserByEmail(ctx context.Context, email string) (*types.User, error) {
+	if email == "" {
+		return nil, fmt.Errorf("email cannot be empty")
+	}
+
+	var user types.User
+
+	err := s.coll.FindOne(ctx, bson.M{"email": email}).Decode(&user)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+
+}
 func (s *MongoUserStore) Drop(ctx context.Context) error {
 	fmt.Println("dropping users")
 	return s.coll.Drop(ctx)
