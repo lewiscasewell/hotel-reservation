@@ -2,9 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"math/rand"
 
+	"github.com/lewiscasewell/hotel-reservation/api"
 	"github.com/lewiscasewell/hotel-reservation/db"
 	"github.com/lewiscasewell/hotel-reservation/types"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -20,7 +22,7 @@ var (
 	ctx        = context.Background()
 )
 
-func seedUser(lname, fname, email, password string) {
+func seedUser(lname, fname, email, password, role string) {
 	user, err := types.NewUserFromParams(&types.CreateUserParams{
 		Email:     email,
 		FirstName: fname,
@@ -32,10 +34,14 @@ func seedUser(lname, fname, email, password string) {
 		log.Fatal(err)
 	}
 
+	user.Role = role
+
 	_, err = userStore.InsertUser(ctx, user)
 	if err != nil {
 		log.Fatal(err)
 	}
+
+	fmt.Printf("user: %v\n --- token --- \n%s\n", user, api.CreateTokenFromUser(user))
 }
 
 func seedHotel(name, location string, rating int) {
@@ -82,8 +88,8 @@ func main() {
 	seedHotel("Marriot", "New York", 4)
 	seedHotel("Hilton", "New York", 5)
 	seedHotel("Marriot", "London", 3)
-	seedUser("Casewell", "Lewis", "lewis@test.com", "password")
-	seedUser("Smith", "John", "john@email.com", "password")
+	seedUser("Casewell", "Lewis", "lewis@test.com", "password", "admin")
+	seedUser("Smith", "John", "john@email.com", "password", "user")
 }
 
 func init() {

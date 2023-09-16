@@ -69,6 +69,7 @@ func main() {
 	// booking routes
 	adminApi.Get("/booking", bookingHandler.HandleGetBookings)
 	apiv1.Get("/booking/:id", bookingHandler.HandleGetUserBooking)
+	apiv1.Put("/booking/:id/cancel", bookingHandler.HandleCancelBooking)
 
 	app.Listen(*listenAddr)
 }
